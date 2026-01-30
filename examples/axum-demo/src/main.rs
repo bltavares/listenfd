@@ -13,7 +13,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // one (eg: no systemd or systemfd), open on port 3000 instead.
     let mut listenfd = listenfd::ListenFd::from_env();
     let listener = match listenfd.take_tcp_listener(0).unwrap() {
-        Some(listener) => TcpListener::from_std(listener),
+        Some(listener) => {
+            let _ = listener.set_nonblocking(true).unwrap();
+            TcpListener::from_std(listener)
+        },
         None => TcpListener::bind("0.0.0.0:3000").await,
     }?;
     axum::serve(listener, app).await?;
